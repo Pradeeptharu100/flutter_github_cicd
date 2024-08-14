@@ -1,42 +1,30 @@
-name: Flutter CI
-
+name: build-android-app
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
+      - "internal/*"
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./android
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 11
+          distribution: "adopt"
+
+      - name: Download Gradle
+        run: |
+          curl -s https://get.gradle.com/ | sh
+          export PATH=$PATH:/home/runner/gradle-7.4/bin
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v1
         with:
           flutter-version: "3.24.0"
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Run Flutter analyze
-        run: flutter analyze
-
-      - name: Run Flutter tests
-        run: flutter test --coverage
-
-      - name: Build APK
-        run: flutter build apk --release
+      - run: fastlane alpha
